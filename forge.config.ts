@@ -14,9 +14,9 @@ import { FuseV1Options, FuseVersion } from "@electron/fuses";
 
 const STRINGS = {
   author: "Revolt Platforms LTD",
-  name: "Stoat",
-  execName: "stoat-desktop",
-  description: "Open source user-first chat platform.",
+  name: "Stoat Pixel",
+  execName: "stoat-pixel",
+  description: "Stoat for pixel peeps",
 };
 
 const ASSET_DIR = "assets/desktop";
@@ -26,7 +26,7 @@ const ASSET_DIR = "assets/desktop";
  */
 const makers: ForgeConfig["makers"] = [
   new MakerSquirrel({
-    name: STRINGS.name,
+    name: STRINGS.execName,
     authors: STRINGS.author,
     // todo: hoist this
     iconUrl: `https://stoat.chat/app/assets/icon-DUSNE-Pb.ico`,
@@ -34,7 +34,7 @@ const makers: ForgeConfig["makers"] = [
     setupIcon: `${ASSET_DIR}/icon.ico`,
     description: STRINGS.description,
     exe: `${STRINGS.execName}.exe`,
-    setupExe: `${STRINGS.execName}-setup.exe`,
+    setupExe: `Stoat Pixel Setup.exe`,
     copyright: "Copyright (C) 2025 Revolt Platforms LTD",
   }),
   new MakerZIP({}),
@@ -169,7 +169,7 @@ const config: ForgeConfig = {
   publishers: [
     new PublisherGithub({
       repository: {
-        owner: "stoatchat",
+        owner: "viznoman",
         name: "for-desktop",
       },
     }),
