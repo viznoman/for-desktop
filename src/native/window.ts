@@ -9,6 +9,8 @@ import {
   nativeImage,
 } from "electron";
 
+import { getSetupDataUrl, getStartUrl, clearSavedServer, setSavedServer } from "./serverSetup";
+
 import windowIconAsset from "../../assets/desktop/icon.png?asset";
 
 import { config } from "./config";
@@ -17,18 +19,40 @@ import { updateTrayMenu } from "./tray";
 // global reference to main window
 export let mainWindow: BrowserWindow;
 
-// currently in-use build
-export const BUILD_URL = new URL(
-  app.commandLine.hasSwitch("force-server")
-    ? app.commandLine.getSwitchValue("force-server")
-    : /*MAIN_WINDOW_VITE_DEV_SERVER_URL ??*/ "https://beta.revolt.chat",
-);
-
 // internal window state
 let shouldQuit = false;
 
 // load the window icon
 const windowIcon = nativeImage.createFromDataURL(windowIconAsset);
+
+let ipcRegistered = false;
+
+export function registerIpcHandlers() {
+  if (ipcRegistered) return;
+  ipcRegistered = true;
+
+  ipcMain.handle("server:connect", () => {
+    const startUrl = getStartUrl();
+    if (startUrl && mainWindow) {
+      mainWindow.loadURL(startUrl);
+    } else if (mainWindow) {
+      mainWindow.loadURL(getSetupDataUrl());
+    }
+  });
+
+  ipcMain.handle("server:connect-default", () => {
+    clearSavedServer();
+    const PUBLIC = "https://beta.revolt.chat";
+    if (mainWindow) mainWindow.loadURL(PUBLIC);
+  });
+
+  ipcMain.handle("server:use-public", () => {
+    const PUBLIC = "https://beta.revolt.chat";
+    setSavedServer(PUBLIC);
+    if (mainWindow) mainWindow.loadURL(PUBLIC);
+  });
+}
+
 
 // windowIcon.setTemplateImage(true);
 
@@ -72,8 +96,13 @@ export function createMainWindow() {
     mainWindow.setSize(config.windowState.width ?? 1280, config.windowState.height ?? 720);
   }
 
-  // load the entrypoint
-  mainWindow.loadURL(BUILD_URL.toString());
+  const startUrl = getStartUrl();
+
+  if (startUrl) {
+    mainWindow.loadURL(startUrl);
+  } else {
+    mainWindow.loadURL(getSetupDataUrl());
+  }
 
   // minimise window to tray
   mainWindow.on("close", (event) => {
@@ -177,6 +206,14 @@ export function createMainWindow() {
 
   // let i = 0;
   // setInterval(() => setBadgeCount((++i % 30) + 1), 1000);
+}
+
+export function showServerSetup() {
+  if (!mainWindow) return;
+
+  mainWindow.loadURL(getSetupDataUrl());
+  mainWindow.show();
+  mainWindow.focus();
 }
 
 /**

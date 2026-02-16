@@ -1,6 +1,8 @@
 import { updateElectronApp } from "update-electron-app";
 
-import { BrowserWindow, app, shell } from "electron";
+import { registerIpcHandlers } from "./native/window";
+
+import { BrowserWindow, app, shell, ipcMain } from "electron";
 import started from "electron-squirrel-startup";
 
 import { autoLaunch } from "./native/autoLaunch";
@@ -8,6 +10,24 @@ import { config } from "./native/config";
 import { initDiscordRpc } from "./native/discordRpc";
 import { initTray } from "./native/tray";
 import { BUILD_URL, createMainWindow, mainWindow } from "./native/window";
+import Store from "electron-store";
+
+// For custom server storage and handling
+type Settings = { serverUrl?: string };
+const store = new Store<Settings>();
+
+ipcMain.handle("server:get", () => store.get("serverUrl") ?? null);
+// Saves the set server url
+ipcMain.handle("server:set", (_event, url: string) => {
+  const u = new URL(url);
+  store.set("serverUrl", u.origin);
+  return u.origin;
+});
+// Fetches the server origin
+ipcMain.handle("server:getEffective", () => {
+  const saved = store.get("serverUrl");
+  return saved ?? null;
+});
 
 // Squirrel-specific logic
 // create/remove shortcuts on Windows when installing / uninstalling
@@ -25,8 +45,15 @@ if (!config.hardwareAcceleration) {
 const acquiredLock = app.requestSingleInstanceLock();
 
 if (acquiredLock) {
+	registerIpcHandlers();
   // start auto update logic
-  updateElectronApp();
+if (app.isPackaged && process.platform === "win32") {
+  updateElectronApp({
+    repo: "viznoman/for-desktop",
+    updateInterval: "1 day",
+    notifyUser: true,
+  });
+}
 
   // create and configure the app when electron is ready
   app.on("ready", () => {
@@ -77,7 +104,7 @@ if (acquiredLock) {
   app.on("web-contents-created", (_, contents) => {
     // prevent navigation out of build URL origin
     contents.on("will-navigate", (event, navigationUrl) => {
-      if (new URL(navigationUrl).origin !== BUILD_URL.origin) {
+      if (new URL(navigationUrl).origin !== new URL(getStartUrl() ?? "https://beta.revolt.chat").origin) {
         event.preventDefault();
       }
     });

@@ -1,5 +1,4 @@
 import { contextBridge, ipcRenderer } from "electron";
-
 import { version } from "../../package.json";
 
 contextBridge.exposeInMainWorld("native", {
@@ -13,6 +12,4 @@ contextBridge.exposeInMainWorld("native", {
   minimise: () => ipcRenderer.send("minimise"),
   maximise: () => ipcRenderer.send("maximise"),
   close: () => ipcRenderer.send("close"),
-
-  setBadgeCount: (count: number) => ipcRenderer.send("setBadgeCount", count),
 });

@@ -5,6 +5,8 @@ import { version } from "../../package.json";
 
 import { mainWindow, quitApp } from "./window";
 
+import { getSetupDataUrl } from "./serverSetup";
+
 // internal tray state
 let tray: Tray = null;
 
@@ -49,6 +51,17 @@ export function updateTrayMenu() {
         ]),
       },
       { type: "separator" },
+	   
+	   {
+        label: "Change Server…",
+		type: "normal",
+        click() {
+		  mainWindow.loadURL(getSetupDataUrl());
+          mainWindow.show();
+          mainWindow.focus();
+	    },
+	  },
+	  
       {
         label: mainWindow.isVisible() ? "Hide App" : "Show App",
         type: "normal",
