@@ -58,8 +58,15 @@ if (!process.env.PLATFORM) {
         description: STRINGS.description,
         productName: STRINGS.name,
         productDescription: STRINGS.description,
-        runtimeVersion: "21.08",
-        icon: `${ASSET_DIR}/icon.png`,
+        runtimeVersion: "25.08",
+        icon: {
+          "16x16": `${ASSET_DIR}/hicolor/16x16.png`,
+          "32x32": `${ASSET_DIR}/hicolor/32x32.png`,
+          "64x64": `${ASSET_DIR}/hicolor/64x64.png`,
+          "128x128": `${ASSET_DIR}/hicolor/128x128.png`,
+          "256x256": `${ASSET_DIR}/hicolor/256x256.png`,
+          "512x512": `${ASSET_DIR}/hicolor/512x512.png`,
+        } as unknown,
         categories: ["Network"],
         modules: [
           // use the latest zypak -- Electron sandboxing for Flatpak
@@ -77,7 +84,7 @@ if (!process.env.PLATFORM) {
         finishArgs: [
           // default arguments found by running
           // DEBUG=electron-installer-flatpak* pnpm make
-          "--socket=x11",
+          "--socket=fallback-x11",
           "--share=ipc",
           "--device=dri",
           "--socket=pulseaudio",

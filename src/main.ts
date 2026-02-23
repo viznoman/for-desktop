@@ -1,16 +1,16 @@
-import { updateElectronApp } from "update-electron-app";
+import { IUpdateInfo, updateElectronApp, } from "update-electron-app";
 
-import { registerIpcHandlers } from "./native/window";
-
-import { BrowserWindow, app, shell, ipcMain } from "electron";
+import { BrowserWindow, Notification, app, shell, ipcMain } from "electron";
 import started from "electron-squirrel-startup";
 
 import { autoLaunch } from "./native/autoLaunch";
 import { config } from "./native/config";
 import { initDiscordRpc } from "./native/discordRpc";
 import { initTray } from "./native/tray";
-import { BUILD_URL, createMainWindow, mainWindow } from "./native/window";
+import { createMainWindow, mainWindow, registerIpcHandlers } from "./native/window";
 import Store from "electron-store";
+
+import { getStartUrl } from "./native/serverSetup";
 
 // For custom server storage and handling
 type Settings = { serverUrl?: string };
@@ -44,6 +44,16 @@ if (!config.hardwareAcceleration) {
 // ensure only one copy of the application can run
 const acquiredLock = app.requestSingleInstanceLock();
 
+const onNotifyUser = (_info: IUpdateInfo) => {
+  const notification = new Notification({
+    title: "Update Available",
+    body: "Restart the app to install the update.",
+    silent: true,
+  });
+
+  notification.show();
+};
+
 if (acquiredLock) {
 	registerIpcHandlers();
   // start auto update logic
@@ -52,20 +62,25 @@ if (app.isPackaged && process.platform === "win32") {
     repo: "viznoman/for-desktop",
     updateInterval: "1 day",
     notifyUser: true,
+    onNotifyUser,
   });
-}
+  } else {
+    updateElectronApp({ onNotifyUser });
+  }
 
   // create and configure the app when electron is ready
   app.on("ready", () => {
+    // create window and application contexts
+    createMainWindow();
+
     // enable auto start on Windows and MacOS
     if (config.firstLaunch) {
       if (process.platform === "win32" || process.platform === "darwin") {
         autoLaunch.enable();
       }
+      config.firstLaunch = false;
     }
 
-    // create window and application contexts
-    createMainWindow();
     initTray();
     initDiscordRpc();
 
